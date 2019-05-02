@@ -1,0 +1,7 @@
+- hosts: all
+  vars_files:
+    - /root/users.yml
+
+  tasks:
+    - include_tasks: include.yml 
+      with_items: "{{ users }}" 
