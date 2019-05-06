@@ -1,0 +1,35 @@
+users:
+  - name: musti.bhai
+    groups: wheel #####wheel
+    shell: /bin/bash
+    space: ##################################################################################
+    password: alpha  
+    createhome: yes
+    vpn_group: Systems
+    routes: 4
+    packageList : ["192.168.100.8","192.168.100.9","192.168.100.10","192.168.100.11"]
+
+
+  - name: gernamy
+    groups: wheel
+    shell: /bin/bash
+    space: ##################################################################################
+    password: beta
+    createhome: yes
+    vpn_group: NGN
+    routes: 2
+    packageList : ["192.168.99.8","192.168.99.9"]
+
+
+#####Groups can be Enter As Follows################
+##Systems
+##NGN
+##Access
+##Core
+##TAC
+##Sales-TX
+##ES
+##Billing
+##Marketing
+##HR 
+################################################
