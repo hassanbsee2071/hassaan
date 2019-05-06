@@ -1,0 +1,140 @@
+- name: Create deploy user
+  user:
+    name: "{{ item.name }}"
+    shell: "{{ item.shell }}"
+    update_password: on_create
+    password: "{{ lookup('password', '/tmp/{{ item.name }}.txt chars=ascii_letters') | password_hash('sha512') }}"
+    createhome: yes
+    groups: "{{ item.groups }}"
+
+
+- name: Alha
+  debug:
+    msg: "{{ item.name }}"
+
+
+- name: long shell script should be on localhost
+  shell: |
+     if [ "{{ item.vpn_group }}" == "NGN" ]; then
+     IP=$(head -1 /root/ngn_free_ips.txt)
+     sed -i '1d' /root/ngn_free_ips.txt
+     echo $IP > /root/getting.txt
+     echo "{{ item.name }}" $IP "{{ item.vpn_group }}" >> /root/ngn_record.txt
+
+     elif [ "{{ item.vpn_group }}" == "Systems" ]; then
+     IP=$(head -1 /root/systems_free_ips.txt)
+     sed -i '1d' /root/systems_free_ips.txt
+     echo $IP > /root/getting.txt
+     echo "{{ item.name }}" $IP "{{ item.vpn_group }}" >> /root/system_record.txt
+
+
+     elif [ "{{ item.vpn_group }}" == "Access" ]; then
+     IP=$(head -1 /root/access_free_ips.txt)
+     sed -i '1d' /root/access_free_ips.txt
+     echo $IP > /root/getting.txt
+     echo "{{ item.name }}" $IP "{{ item.groups }}" >> /root/access.txt
+
+
+
+     elif [ "{{ item.vpn_group }}" == "Core" ]; then
+     IP=$(head -1 /root/core_free_ips.txt)
+     sed -i '1d' /root/core_free_ips.txt
+     echo $IP > /root/getting.txt
+     echo "{{ item.name }}" $IP "{{ item.groups }}" >> /root/core_record.txt
+
+
+
+
+     elif [ "{{ item.vpn_group }}" == "TAC" ]; then
+     IP=$(head -1 /root/tac_free_ips.txt)
+     echo $IP
+     sed -i '1d' /root/tac_free_ips.txt
+     echo $IP > /root/getting.txt
+     echo "{{ item.name }}" $IP "{{ item.groups }}" >> /root/tac_record.txt
+
+
+
+     elif [ "{{ item.vpn_group }}" == "Sales-TX" ]; then
+     IP=$(head -1 /root/sales-tx_free_ips.txt)
+     sed -i '1d' /root/sales-tx_free_ips.txt
+     echo $IP > /root/getting.txt
+     echo "{{ item.name }}" $IP "{{ item.groups }}" >> /root/sales_and_tx_record.txt
+
+
+
+
+     elif [ "{{ item.vpn_group }}" == "ES" ]; then
+     IP=$(head -1 /root/es_free_ips.txt)
+     sed -i '1d' /root/es_free_ips.txt
+     echo $IP > /root/getting.txt
+     echo "{{ item.name }}" $IP "{{ item.groups }}" >> /root/es_record.txt
+
+
+
+     elif [ "{{ item.vpn_group }}" == "Billing" ]; then
+     IP=$(head -1 /root/billing_free_ips.txt)
+     sed -i '1d' /root/billing_free_ips.txt
+     echo $IP > /root/getting.txt
+     echo "{{ item.name }}" $IP "{{ item.groups }}" >> /root/billing_record.txt
+
+
+
+
+
+     elif [ "{{ item.vpn_group }}" == "Marketing" ]; then
+     IP=$(head -1 /root/marketing_free_ips.txt)
+     sed -i '1d' /root/marketing_free_ips.txt
+     echo $IP > /root/getting.txt
+     echo "{{ item.name }}" $IP "{{ item.groups }}" >> /root/marketing_record.txt
+
+
+
+
+
+     elif [ "{{ item.vpn_group }}" == "HR" ]; then
+     IP=$(head -1 /root/hr_free_ips.txt)
+     sed -i '1d' /root/hr_free_ips.txt
+     echo $IP > /root/getting.txt
+     echo "{{ item.name }}" $IP "{{ item.groups }}" >> /root/hr_record.txt
+
+     else
+     echo -n "You have selected the wrong group, please note group selection is case sensitive"
+     fi
+
+  args:
+    executable: /bin/bash
+  register: boot_param_root 
+  delegate_to: 127.0.0.1
+
+- name: lookup
+  debug: msg="{{ lookup('file', '/root/getting.txt') }}"
+
+
+- name: long shell script on nstorage
+  shell: |
+    cd /usr/local/openvpn_as/scripts
+    ./sacli --user "{{ item.name }}" --key access_to.0 --value "+ROUTE:10.10.10.10/32" UserPropPut
+    for (( j=1;  j<="{{ item.routes }}";  j++ ))
+    do
+    #route=$(head -"$j" /root/hr_free_ips.txt)
+    #real=$(echo $route | cut -d" " -f$j)
+    echo "{{ item.packageList }}" > /tmp/routes.txt
+    head -1 /tmp/routes.txt | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' > /tmp/phans.txt
+    throt=$(head -"$j" /tmp/phans.txt)
+    real=$(echo $throt | cut -d" " -f$j)
+    echo $real >> /tmp/phanda.txt
+    ./sacli --user "{{ item.name }}" --key access_to.$j --value "+ROUTE:$real" UserPropPut
+    done
+    IPP="{{ lookup('file', '/root/getting.txt') }}"
+    ./sacli --user "{{ item.name }}" --key conn_group --value "{{ item.vpn_group }}" UserPropPut
+    ./sacli --user "{{ item.name }}" --key conn_ip --value $IPP UserPropPut
+    ./sacli --user "{{ item.name }}" --key access_from.0 --value "+ALL_S2C_SUBNETS" UserPropPut
+
+
+#    cd /tmp
+#    IP="{{ lookup('file', '/root/getting.txt') }}"
+#    echo $IP  "{{ item.name }}" >> mood.py
+#    ## echo "{{ lookup('file', '/root/getting.txt') }}"  "{{ item.name }}" >> /root/good.py
+  args:
+    executable: /bin/bash
+  register: boot_param_root
